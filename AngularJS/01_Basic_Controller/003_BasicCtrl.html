@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+<html ng-app="test">
+<head>
+    <title>Task</title>
+
+    <script src="../Libraries/angular.js"></script>
+    <link href="../Libraries/bootstrap-theme.css" rel="stylesheet" />
+    <link href="../Libraries/bootstrap.css" rel="stylesheet" />
+
+    <script>
+        angular.module("test", [])
+        .controller("GitHubCtrl", function ($scope, $http) {
+            $scope.selectedQuery = null;
+
+            $scope.queries = [
+                {id:"most_rated", label:"most rated", query: "repositories?q=stars:>1500"},
+                {id: "by_repository_size", label:"by repository size", query: "repositories?q=size:>=300000"},
+                {id: "created this year", label:"created this year", query: "repositories?q=created:>2017-12-31"}
+            ];
+
+            $scope.getGitInfo = function () {
+                $scope.somethingWrong = false;
+                $scope.loaded = false;
+
+                if(!$scope.selectedQuery) return;
+
+                $http.get("https://api.github.com/search/" + $scope.selectedQuery.query)
+                    .success(function (data) {
+                        if (data.name == "") data.name = data.login;
+                            $scope.items = data.items;
+                            $scope.loaded = true;
+                        })
+                        .error(function () {
+                            $scope.somethingWrong = true;
+                        });
+                $http.get("https://api.github.com/search/" + $scope.selectedQuery.query).success(function (data) {
+                    $scope.repos = data;
+                    $scope.reposFound = data.length > 0;
+                });
+            };
+        })
+    </script>
+</head>
+
+
+
+
+<body ng-controller="GitHubCtrl">
+    <div class="panel panel-primary">
+
+
+
+        <div class="panel-heading">
+            <!--<h4>selected: {{selectedQuery.label}}</h4>-->
+            <h4>query is : https://api.github.com/search/{{selectedQuery.query}}</h4>
+        </div>
+
+        <div class="panel-body">
+            <label class="h4">Searching repository:</label>
+            <select ng-options="query.label for query in queries track by query.id" ng-model="selectedQuery" ng-change="getGitInfo()"></select>
+        </div>
+
+
+
+
+                <div ng-show="somethingWrong">
+                <h2>Something went wrong (or you don't choose query). Try again</h2>
+                </div>
+
+                <div ng-show="loaded">
+                    <table style="width:80%" border="2" cellpadding="7" align="center">
+                      <tr>
+                        <th>Выбрать</th>
+                        <th>Имя репозитория</th>
+                        <th>Создан</th>
+                        <th>Обновлен</th>
+                        <th>Ссылка на репозиторий</th>
+                        
+                      </tr>
+                      <tr ng-repeat="item in items">
+                          <td> <input type="checkbox"  ng-model="check" /></td>
+                          <td>{{item.name}}</td>
+                          <td>{{item.created_at}}</td>
+                          <td>{{item.updated_at}}</td>
+                          <td>{{item.html_url}}</td>
+                          
+                      </tr>
+                    </table>
+                    
+                    
+               </div>
+    </div>
+</body>
+</html>
